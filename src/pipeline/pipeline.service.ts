@@ -19,10 +19,7 @@ export class PipelineService {
     private readonly agentService: AgentService,
     private readonly commentService: CommentService,
   ) {
-    this.maxFilesPerMR = parseInt(
-      this.configService.get<string>('MAX_FILES_PER_MR') || '50',
-      10,
-    );
+    this.maxFilesPerMR = parseInt(this.configService.get<string>('MAX_FILES_PER_MR') || '50', 10);
     this.maxConcurrentRequests = parseInt(
       this.configService.get<string>('MAX_CONCURRENT_REQUESTS') || '3',
       10,
@@ -37,11 +34,7 @@ export class PipelineService {
 
     try {
       // 1. 拉取 MR 变更
-      const fileChanges = await this.gitlabService.getMRChanges(
-        mrInfo.projectId,
-        mrInfo.mrIid,
-      );
-      // console.log(fileChanges);
+      const fileChanges = await this.gitlabService.getMRChanges(mrInfo.projectId, mrInfo.mrIid);
       // 2. 检查文件数量限制
       if (fileChanges.length > this.maxFilesPerMR) {
         this.logger.warn(
@@ -93,13 +86,15 @@ export class PipelineService {
           mrInfo.mrIid,
         );
 
-        // await this.commentService.postComments(
-        //   allComments,
-        //   mrInfo,
-        //   baseSha,
-        //   startSha,
-        //   headSha,
-        // );
+        // 传递 fileChanges 以便正确设置 old_path 等信息
+        await this.commentService.postComments(
+          allComments,
+          mrInfo,
+          baseSha,
+          startSha,
+          headSha,
+          fileChanges,
+        );
 
         this.logger.log(`Posted ${allComments.length} comments to GitLab`);
       } else {

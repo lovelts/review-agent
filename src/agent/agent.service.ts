@@ -17,7 +17,7 @@ export class AgentService {
   private readonly tempDir: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.cursorModel = this.configService.get<string>('CURSOR_MODEL') || 'sonnet-4.5';
+    this.cursorModel = this.configService.get<string>('CURSOR_MODEL');
     this.cursorCliPath = this.configService.get<string>('CURSOR_CLI_PATH') || 'cursor';
     this.tempDir = join(process.cwd(), 'tmp', 'cr-inputs');
   }
@@ -45,7 +45,7 @@ export class AgentService {
 
       // 清理临时文件
       await this.cleanupFiles([inputFile, promptFile, rulesFile]);
-
+      // console.log('crResult', crResult);
       return crResult;
     } catch (error) {
       this.logger.error(`Failed to execute CR:`, error);
@@ -93,17 +93,23 @@ ${context.contextCode}
 
 You are an expert code reviewer. Analyze the provided code diff and context, then provide code review comments.
 
+## Language Requirement:
+- All comments MUST be in Chinese (简体中文)
+- Use professional and clear Chinese language
+- Be concise and specific
+
 ## Instructions:
 1. Review the code changes carefully
 2. Identify potential issues, bugs, security vulnerabilities, performance problems, or code quality issues
 3. Only comment on real issues - do NOT provide suggestions for style preferences or minor improvements
 4. If there are no issues, return an empty comments array
-5. Be specific and actionable in your comments
+5. Be specific and actionable in your comments (in Chinese)
 
 ## Output Format:
-You MUST respond with a valid JSON object in the following format:
+You MUST respond with ONLY a valid JSON object, no markdown, no code blocks, no explanations, no additional text.
 
-\`\`\`json
+The JSON format is:
+
 {
   "comments": [
     {
@@ -114,19 +120,27 @@ You MUST respond with a valid JSON object in the following format:
     }
   ]
 }
-\`\`\`
 
 ## Severity Levels:
-- \`error\`: Critical issues that must be fixed (bugs, security vulnerabilities)
-- \`warning\`: Important issues that should be addressed (potential bugs, performance issues)
-- \`info\`: Informational comments (code quality, best practices)
-- \`suggestion\`: Optional improvements
+- \`error\`: 必须修复的关键问题（bug、安全漏洞）
+- \`warning\`: 应该解决的重要问题（潜在 bug、性能问题）
+- \`info\`: 信息性评论（代码质量、最佳实践）
+- \`suggestion\`: 可选的改进建议
 
-## Important:
-- Return ONLY the JSON object, no additional text
-- If no issues found, return: \`{"comments": []}\`
-- Line numbers should refer to the NEW line numbers in the diff
-- Be concise and specific
+## CRITICAL REQUIREMENTS:
+1. Return ONLY the raw JSON object, nothing else
+2. Do NOT wrap it in markdown code blocks
+3. Do NOT add any explanations or text before or after the JSON
+4. Do NOT use \`\`\`json or \`\`\` markers
+5. If no issues found, return exactly: {"comments": []}
+6. Line numbers should refer to the NEW line numbers in the diff
+7. All comments MUST be in Chinese (简体中文)
+8. Be concise and specific in comments
+
+## Example Output:
+Your response should start with { and end with }, containing only valid JSON:
+
+{"comments": [{"file": "src/file.ts", "line": 42, "severity": "error", "comment": "Issue description"}]}
 `;
 
     const fileName = `cr-prompt-${Date.now()}.md`;
@@ -215,10 +229,12 @@ You MUST respond with a valid JSON object in the following format:
           }),
         },
       });
-
+      console.log('stdout', stdout);
       if (stderr) {
         this.logger.warn(`Cursor Agent stderr: ${stderr}`);
       }
+
+      this.logger.debug(`Cursor Agent output length: ${stdout.length} characters`);
 
       // 清理临时 prompt 文件
       try {
@@ -230,7 +246,15 @@ You MUST respond with a valid JSON object in the following format:
 
       return stdout;
     } catch (error: any) {
-      this.logger.error(`Cursor Agent execution failed:`, error);
+      const errorDetails = {
+        command: command.substring(0, 200) + '...',
+        message: error.message,
+        code: error.code,
+        signal: error.signal,
+        stdout: error.stdout?.substring(0, 500),
+        stderr: error.stderr?.substring(0, 500),
+      };
+      this.logger.error(`Cursor Agent execution failed: ${JSON.stringify(errorDetails, null, 2)}`);
       throw new Error(`Cursor Agent execution failed: ${error.message}`);
     }
   }
@@ -240,14 +264,38 @@ You MUST respond with a valid JSON object in the following format:
    */
   private parseResult(output: string): CRResult {
     try {
-      // 尝试从输出中提取 JSON
-      const jsonMatch = output.match(/\{[\s\S]*"comments"[\s\S]*\}/);
-      if (!jsonMatch) {
-        this.logger.warn('No JSON found in Cursor CLI output');
-        return { comments: [] };
-      }
+      // 清理输出，移除可能的 markdown 代码块标记
+      let cleanedOutput = output.trim();
 
-      const result = JSON.parse(jsonMatch[0]) as CRResult;
+      // 移除 markdown 代码块标记（如果存在）
+      cleanedOutput = cleanedOutput.replace(/^```json\s*/i, '');
+      cleanedOutput = cleanedOutput.replace(/^```\s*/i, '');
+      cleanedOutput = cleanedOutput.replace(/\s*```$/i, '');
+      cleanedOutput = cleanedOutput.trim();
+
+      // 尝试直接解析整个输出
+      let result: CRResult;
+      try {
+        result = JSON.parse(cleanedOutput) as CRResult;
+      } catch {
+        // 如果直接解析失败，尝试提取 JSON 对象
+        const jsonMatch = cleanedOutput.match(/\{[\s\S]*"comments"[\s\S]*\}/);
+        if (!jsonMatch) {
+          // 如果仍然找不到 JSON，尝试从文本中提取结构化信息
+          this.logger.warn('No JSON found in Cursor CLI output, attempting to parse text format');
+          this.logger.debug(`Output preview: ${cleanedOutput.substring(0, 500)}...`);
+
+          // 尝试从文本中提取评论（作为后备方案）
+          const textComments = this.parseTextOutput(cleanedOutput);
+          if (textComments.length > 0) {
+            this.logger.warn(`Parsed ${textComments.length} comments from text format (fallback)`);
+            return { comments: textComments };
+          }
+
+          return { comments: [] };
+        }
+        result = JSON.parse(jsonMatch[0]) as CRResult;
+      }
 
       // 验证结果格式
       if (!result.comments || !Array.isArray(result.comments)) {
@@ -282,6 +330,57 @@ You MUST respond with a valid JSON object in the following format:
       this.logger.error(`Failed to parse CR result:`, error);
       return { comments: [] };
     }
+  }
+
+  /**
+   * 从文本输出中解析评论（后备方案）
+   * 当 Cursor 返回文本格式而不是 JSON 时使用
+   */
+  private parseTextOutput(output: string): CRComment[] {
+    const comments: CRComment[] = [];
+
+    // 尝试从文本中提取结构化信息
+    // 匹配类似 "1. **Critical security issue (error)**: description" 的格式
+    const issuePattern = /(\d+)\.\s*\*\*([^*]+?)\s*\((\w+)\)\*\*:\s*(.+?)(?=\d+\.\s*\*\*|$)/gs;
+
+    let match;
+    while ((match = issuePattern.exec(output)) !== null) {
+      const severityText = match[3].toLowerCase();
+      const commentText = match[4].trim();
+
+      // 从上下文中提取文件路径和行号（如果存在）
+      const fileMatch = output.substring(0, match.index).match(/file[:\s]+([^\s\n]+)/i);
+      const lineMatch = output.substring(0, match.index).match(/line[:\s]+(\d+)/i);
+
+      const file = fileMatch ? fileMatch[1] : 'unknown';
+      const line = lineMatch ? parseInt(lineMatch[1], 10) : 1;
+
+      comments.push({
+        file,
+        line,
+        severity: this.mapSeverity(severityText),
+        comment: commentText,
+      });
+    }
+
+    return comments;
+  }
+
+  /**
+   * 映射文本严重程度到枚举
+   */
+  private mapSeverity(text: string): CommentSeverity {
+    const lower = text.toLowerCase();
+    if (lower.includes('error') || lower.includes('critical')) {
+      return CommentSeverity.ERROR;
+    }
+    if (lower.includes('warning')) {
+      return CommentSeverity.WARNING;
+    }
+    if (lower.includes('suggestion')) {
+      return CommentSeverity.SUGGESTION;
+    }
+    return CommentSeverity.INFO;
   }
 
   /**

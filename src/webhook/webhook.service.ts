@@ -25,7 +25,7 @@ export class WebhookService {
    */
   async processMergeRequest(mrInfo: MergeRequestInfo): Promise<void> {
     this.logger.log(`Starting CR pipeline for MR #${mrInfo.mrIid}`);
-    
+
     try {
       await this.pipelineService.executeCRPipeline(mrInfo);
       this.logger.log(`CR pipeline completed for MR #${mrInfo.mrIid}`);

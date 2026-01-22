@@ -71,11 +71,7 @@ export class ContextService {
     }
 
     // 提取上下文代码（±contextLines 行）
-    const contextCode = this.extractContextCode(
-      fileContent,
-      hunk.newStart,
-      hunk.newLines,
-    );
+    const contextCode = this.extractContextCode(fileContent, hunk.newStart, hunk.newLines);
 
     return {
       filePath: fileChange.filePath,
@@ -91,11 +87,7 @@ export class ContextService {
   /**
    * 提取上下文代码
    */
-  private extractContextCode(
-    fileContent: string,
-    lineStart: number,
-    lineCount: number,
-  ): string {
+  private extractContextCode(fileContent: string, lineStart: number, lineCount: number): string {
     if (!fileContent) {
       return '';
     }
@@ -113,8 +105,6 @@ export class ContextService {
   escapeCode(code: string): string {
     // 简单的转义：将代码块用标记包裹
     // 在实际使用中，应该更严格地处理特殊字符
-    return code
-      .replace(/```/g, '\\`\\`\\`')
-      .replace(/\$\{/g, '\\${');
+    return code.replace(/```/g, '\\`\\`\\`').replace(/\$\{/g, '\\${');
   }
 }

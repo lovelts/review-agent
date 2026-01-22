@@ -22,9 +22,7 @@ export class GitlabService {
     }
 
     if (!this.gitlabUrl) {
-      this.logger.warn(
-        'GITLAB_URL is not configured. Using default: https://gitlab.com',
-      );
+      this.logger.warn('GITLAB_URL is not configured. Using default: https://gitlab.com');
     }
 
     this.apiClient = axios.create({
@@ -43,15 +41,16 @@ export class GitlabService {
   /**
    * 获取 MR 详细信息
    */
-  async getMRDetails(projectId: number, mrIid: number): Promise<{
+  async getMRDetails(
+    projectId: number,
+    mrIid: number,
+  ): Promise<{
     baseSha: string;
     headSha: string;
     startSha: string;
   }> {
     try {
-      const response = await this.apiClient.get(
-        `/projects/${projectId}/merge_requests/${mrIid}`,
-      );
+      const response = await this.apiClient.get(`/projects/${projectId}/merge_requests/${mrIid}`);
 
       return {
         baseSha: response.data.diff_refs?.base_sha || response.data.target_branch,
@@ -67,7 +66,10 @@ export class GitlabService {
   /**
    * 获取完整的 MR 信息（用于手动触发）
    */
-  async getFullMRInfo(projectId: number, mrIid: number): Promise<{
+  async getFullMRInfo(
+    projectId: number,
+    mrIid: number,
+  ): Promise<{
     projectId: number;
     mrIid: number;
     commitSha: string;
@@ -79,16 +81,12 @@ export class GitlabService {
   }> {
     // 检查 token 是否配置
     if (!this.gitlabToken) {
-      throw new Error(
-        'GITLAB_TOKEN is not configured. Please set GITLAB_TOKEN in .env file.',
-      );
+      throw new Error('GITLAB_TOKEN is not configured. Please set GITLAB_TOKEN in .env file.');
     }
 
     try {
       const url = `/projects/${projectId}/merge_requests/${mrIid}`;
-      this.logger.debug(
-        `Fetching MR info: projectId=${projectId}, mrIid=${mrIid}, url=${url}`,
-      );
+      this.logger.debug(`Fetching MR info: projectId=${projectId}, mrIid=${mrIid}, url=${url}`);
 
       const response = await this.apiClient.get(url);
 
@@ -214,17 +212,38 @@ export class GitlabService {
     body: string,
   ): Promise<void> {
     try {
-      await this.apiClient.post(
-        `/projects/${projectId}/merge_requests/${mrIid}/discussions`,
-        {
-          body,
-          position,
-        },
-      );
+      await this.apiClient.post(`/projects/${projectId}/merge_requests/${mrIid}/discussions`, {
+        body,
+        position,
+      });
 
       this.logger.debug(`Created discussion at line ${position.new_line} in ${position.new_path}`);
-    } catch (error) {
-      this.logger.error(`Failed to create discussion:`, error);
+    } catch (error: any) {
+      // 输出详细的错误信息
+      const errorDetails = {
+        projectId,
+        mrIid,
+        file: position.new_path,
+        line: position.new_line,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        errorMessage: error.response?.data?.message || error.message,
+        errorData: error.response?.data,
+        requestData: {
+          body: body.substring(0, 100) + '...',
+          position,
+        },
+      };
+
+      this.logger.error(`Failed to create discussion: ${JSON.stringify(errorDetails, null, 2)}`);
+
+      // 如果是 400 错误，可能是行号或位置参数问题
+      if (error.response?.status === 400) {
+        this.logger.warn(
+          `400 Bad Request - Possible causes: invalid line number, incorrect SHA, or file path issue`,
+        );
+      }
+
       throw error;
     }
   }

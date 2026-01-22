@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // 启用全局验证管道
   app.useGlobalPipes(
     new ValidationPipe({
@@ -16,7 +16,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`🚀 CR Agent server is running on: http://localhost:${port}`);
 }
 

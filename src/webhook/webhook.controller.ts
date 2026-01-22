@@ -1,4 +1,14 @@
-import { Controller, Post, Headers, Body, HttpCode, HttpStatus, Logger, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Headers,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { MergeRequestInfo } from '../common/types';
 import { GitlabService } from '../gitlab/gitlab.service';
@@ -14,10 +24,7 @@ export class WebhookController {
 
   @Post('gitlab')
   @HttpCode(HttpStatus.OK)
-  async handleGitLabWebhook(
-    @Headers('x-gitlab-token') token: string,
-    @Body() payload: any,
-  ) {
+  async handleGitLabWebhook(@Headers('x-gitlab-token') token: string, @Body() payload: any) {
     this.logger.log('Received GitLab webhook');
 
     // 验证 token
@@ -70,10 +77,7 @@ export class WebhookController {
    */
   @Post('api/review')
   @HttpCode(HttpStatus.OK)
-  async manualReview(
-    @Query('projectId') projectId: string,
-    @Query('mrIid') mrIid: string,
-  ) {
+  async manualReview(@Query('projectId') projectId: string, @Query('mrIid') mrIid: string) {
     this.logger.log(`Manual review triggered for project ${projectId}, MR ${mrIid}`);
 
     const projectIdNum = parseInt(projectId, 10);

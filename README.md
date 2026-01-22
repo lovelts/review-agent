@@ -55,7 +55,7 @@ npm run start:prod
 3. 提交并推送代码
 4. 创建或更新 MR 时，CI/CD 会自动触发代码审查
 
-详细说明请查看 [GITLAB_CI_SETUP.md](./GITLAB_CI_SETUP.md)
+详细说明请查看 [GITLAB_CI_SETUP.md](./docs/GITLAB_CI_SETUP.md)
 
 ## 项目结构
 
@@ -97,11 +97,12 @@ cursor --version
 
 ## 文档
 
-- [快速开始指南](./QUICKSTART.md) - 5 分钟快速部署
-- [架构说明](./ARCHITECTURE.md) - 系统架构和模块说明
-- [部署指南](./DEPLOYMENT.md) - 生产环境部署说明
-- [GitLab CI/CD 集成](./GITLAB_CI_SETUP.md) - 通过 CI/CD 触发代码审查（适用于内网环境）
-- [技术方案](./GitLab_CR_AI_技术方案.md) - 完整技术方案文档
+- [快速开始指南](./docs/QUICKSTART.md) - 5 分钟快速部署
+- [架构说明](./docs/ARCHITECTURE.md) - 系统架构和模块说明
+- [部署指南](./docs/DEPLOYMENT.md) - 生产环境部署说明
+- [GitLab CI/CD 集成](./docs/GITLAB_CI_SETUP.md) - 通过 CI/CD 触发代码审查（适用于内网环境）
+- [GitLab Runner 设置](./docs/GITLAB_RUNNER_SETUP.md) - GitLab Runner 安装和配置指南
+- [技术方案](./docs/GitLab_CR_AI_技术方案.md) - 完整技术方案文档
 
 ## 工作流程
 

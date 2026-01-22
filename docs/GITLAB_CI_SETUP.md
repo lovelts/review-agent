@@ -6,7 +6,7 @@
 
 ## 配置步骤
 
-### 1. 在项目根目录创建 `.gitlab-ci.yml`
+### 1. 在需要CR的项目根目录创建 `.gitlab-ci.yml`
 
 将 `.gitlab-ci.yml.example` 复制为 `.gitlab-ci.yml`，并修改 `CR_AGENT_URL`：
 

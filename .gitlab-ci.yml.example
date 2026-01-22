@@ -1,0 +1,36 @@
+# GitLab CI/CD 配置示例
+# 将此文件复制为 .gitlab-ci.yml 并修改 CR_AGENT_URL
+
+variables:
+  # CR Agent 服务地址（使用内网 IP，因为通过 CI/CD 调用，不受 Webhook 限制）
+  CR_AGENT_URL: "http://你的内网IP:3000"
+
+stages:
+  - review
+
+# 代码审查任务
+code_review:
+  stage: review
+  script:
+    - |
+      echo "Starting code review for MR #$CI_MERGE_REQUEST_IID"
+      
+      # 调用 CR Agent API
+      response=$(curl -s -w "\n%{http_code}" -X POST \
+        "$CR_AGENT_URL/webhook/api/review?projectId=$CI_PROJECT_ID&mrIid=$CI_MERGE_REQUEST_IID" \
+        -H "Content-Type: application/json")
+      
+      http_code=$(echo "$response" | tail -n1)
+      body=$(echo "$response" | sed '$d')
+      
+      echo "Response: $body"
+      
+      if [ "$http_code" -eq 200 ]; then
+        echo "✅ Code review started successfully"
+      else
+        echo "❌ Failed to start code review (HTTP $http_code)"
+        exit 1
+      fi
+  only:
+    - merge_requests
+  when: manual  # 可选：设置为 manual 需要手动触发，或移除此行自动触发

@@ -6,6 +6,7 @@ import { ContextModule } from './context/context.module';
 import { AgentModule } from './agent/agent.module';
 import { CommentModule } from './comment/comment.module';
 import { PipelineModule } from './pipeline/pipeline.module';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PipelineModule } from './pipeline/pipeline.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    SkillsModule,
     WebhookModule,
     GitlabModule,
     ContextModule,

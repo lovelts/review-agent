@@ -6,6 +6,7 @@ import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { CRContext, CRResult, CRComment } from '../common/types';
 import { CommentSeverity } from '../common/types';
+import { SkillsService } from '../skills/skills.service';
 
 const execAsync = promisify(exec);
 
@@ -15,11 +16,17 @@ export class AgentService {
   private readonly cursorModel: string;
   private readonly cursorCliPath: string;
   private readonly tempDir: string;
+  private readonly useSkills: boolean;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly skillsService?: SkillsService,
+  ) {
     this.cursorModel = this.configService.get<string>('CURSOR_MODEL');
     this.cursorCliPath = this.configService.get<string>('CURSOR_CLI_PATH') || 'cursor';
     this.tempDir = join(process.cwd(), 'tmp', 'cr-inputs');
+    this.useSkills =
+      this.configService.get<string>('USE_SKILLS') !== 'false' && !!this.skillsService;
   }
 
   /**
@@ -32,21 +39,41 @@ export class AgentService {
       // 确保临时目录存在
       await mkdir(this.tempDir, { recursive: true });
 
-      // 生成输入文件
-      const inputFile = await this.generateInputFile(context);
+      // 1. 执行 Skills（如果启用）
+      let skillsComments: CRComment[] = [];
+      if (this.useSkills && this.skillsService) {
+        try {
+          const skillsResults = await this.skillsService.executeSkills(context);
+          skillsComments = this.skillsService.mergeResults(skillsResults);
+          const stats = this.skillsService.getStatistics(skillsResults);
+          this.logger.debug(
+            `Skills executed: ${stats.successfulSkills}/${stats.totalSkills} successful, ${stats.totalComments} comments, avg time: ${stats.averageExecutionTime}ms`,
+          );
+        } catch (error) {
+          this.logger.warn(`Skills execution failed:`, error);
+        }
+      }
+
+      // 2. 生成输入文件（包含 Skills 结果）
+      const inputFile = await this.generateInputFile(context, skillsComments);
       const promptFile = await this.generatePromptFile();
       const rulesFile = await this.generateRulesFile();
 
-      // 执行 Cursor Agent
+      // 3. 执行 Cursor Agent
       const result = await this.runCursorCLI(inputFile, promptFile, rulesFile);
 
-      // 解析结果
+      // 4. 解析结果
       const crResult = this.parseResult(result);
+
+      // 5. 合并 Skills 结果和 AI 结果
+      const allComments = [...skillsComments, ...crResult.comments];
 
       // 清理临时文件
       await this.cleanupFiles([inputFile, promptFile, rulesFile]);
-      // console.log('crResult', crResult);
-      return crResult;
+
+      return {
+        comments: allComments,
+      };
     } catch (error) {
       this.logger.error(`Failed to execute CR:`, error);
       throw error;
@@ -56,13 +83,27 @@ export class AgentService {
   /**
    * 生成 CR 输入文件
    */
-  private async generateInputFile(context: CRContext): Promise<string> {
+  private async generateInputFile(
+    context: CRContext,
+    skillsComments: CRComment[] = [],
+  ): Promise<string> {
+    let skillsSection = '';
+    if (skillsComments.length > 0) {
+      skillsSection = `## Static Analysis Results (from tools):
+${skillsComments.map((c) => `- Line ${c.line}: [${c.severity}] ${c.comment}`).join('\n')}
+
+**Note**: These are automated tool findings. Please review them along with the code changes.
+
+---
+`;
+    }
+
     const content = `# Code Review Context
 
 ## File: ${context.filePath}
 ## Language: ${context.language || 'unknown'}
 
-## Diff:
+${skillsSection}## Diff:
 \`\`\`diff
 ${context.diff}
 \`\`\`

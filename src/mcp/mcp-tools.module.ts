@@ -10,12 +10,7 @@ import { SearchInDirectoryTool } from './tools/search-in-directory.tool';
  * - 用于动态拉取仓库/项目上下文，供 CR Agent 使用
  */
 @Module({
-  providers: [
-    McpToolsService,
-    ReadFileTool,
-    ListDirectoryTool,
-    SearchInDirectoryTool,
-  ],
+  providers: [McpToolsService, ReadFileTool, ListDirectoryTool, SearchInDirectoryTool],
   exports: [McpToolsService],
 })
 export class McpToolsModule {}

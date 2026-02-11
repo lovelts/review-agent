@@ -44,10 +44,7 @@ export interface IMcpTool {
    * @param args 由 definition.parameters 定义的键值对
    * @param options 执行时上下文（如 repoRoot、projectId 等）
    */
-  execute(
-    args: Record<string, unknown>,
-    options: McpToolExecuteOptions,
-  ): Promise<McpToolResult>;
+  execute(args: Record<string, unknown>, options: McpToolExecuteOptions): Promise<McpToolResult>;
 }
 
 /**

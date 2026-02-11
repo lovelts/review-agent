@@ -15,7 +15,9 @@ import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
 
-const REPO_ROOT = process.env.REPO_ROOT ? resolve(process.cwd(), process.env.REPO_ROOT) : process.cwd();
+const REPO_ROOT = process.env.REPO_ROOT
+  ? resolve(process.cwd(), process.env.REPO_ROOT)
+  : process.cwd();
 
 function resolveSafe(relativePath: string, repoRoot: string): string | null {
   const normalized = relativePath.replace(/\\/g, '/').replace(/^\/+/, '') || '.';
@@ -25,14 +27,19 @@ function resolveSafe(relativePath: string, repoRoot: string): string | null {
   return absolute;
 }
 
-async function doReadFile(pathArg: string, encoding: string): Promise<{ path: string; content: string } | string> {
+async function doReadFile(
+  pathArg: string,
+  encoding: string,
+): Promise<{ path: string; content: string } | string> {
   const safe = resolveSafe(pathArg.trim(), REPO_ROOT);
   if (!safe) return 'Path escapes repo root or is invalid';
   const content = await readFile(safe, encoding as BufferEncoding);
   return { path: pathArg, content: String(content) };
 }
 
-async function doListDir(pathArg: string): Promise<{ path: string; entries: Array<{ name: string; type: string }> } | string> {
+async function doListDir(
+  pathArg: string,
+): Promise<{ path: string; entries: Array<{ name: string; type: string }> } | string> {
   const safe = resolveSafe(pathArg.trim() || '.', REPO_ROOT);
   if (!safe) return 'Path escapes repo root or is invalid';
   const entries = await readdir(safe, { withFileTypes: true });
@@ -61,7 +68,14 @@ async function doSearch(
   pattern: string,
   filePattern: string | null,
   maxMatches: number,
-): Promise<{ pattern: string; path: string; matches: Array<{ file: string; line: number; content: string }> } | string> {
+): Promise<
+  | {
+      pattern: string;
+      path: string;
+      matches: Array<{ file: string; line: number; content: string }>;
+    }
+  | string
+> {
   const safeDir = resolveSafe(dirPath.trim() || '.', REPO_ROOT);
   if (!safeDir) return 'Path escapes repo root or is invalid';
   const results: Array<{ file: string; line: number; content: string }> = [];
@@ -82,7 +96,13 @@ async function doSearch(
       if (results.length >= maxMatches || filesScanned >= DEFAULT_MAX_FILES) break;
       const full = resolve(currentDir, e.name);
       if (e.isDirectory()) {
-        if (e.name === 'node_modules' || e.name === '.git' || e.name === 'dist' || e.name === 'build') continue;
+        if (
+          e.name === 'node_modules' ||
+          e.name === '.git' ||
+          e.name === 'dist' ||
+          e.name === 'build'
+        )
+          continue;
         await scan(full);
         continue;
       }
@@ -137,7 +157,8 @@ async function main() {
     'list_directory',
     {
       title: 'List Directory',
-      description: 'List entries (files and subdirectories) in a directory. Path is relative to repo root.',
+      description:
+        'List entries (files and subdirectories) in a directory. Path is relative to repo root.',
       inputSchema: z.object({
         path: z.string().describe('Relative path to the directory (use "." for repo root)'),
       }),

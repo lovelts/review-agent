@@ -30,8 +30,7 @@ export class AgentService {
     this.tempDir = join(process.cwd(), 'tmp', 'cr-inputs');
     this.useAnalyzers =
       this.configService.get<string>('USE_ANALYZERS') !== 'false' && !!this.analyzersService;
-    this.useMcp =
-      this.configService.get<string>('USE_MCP') !== 'false' && !!this.mcpToolsService;
+    this.useMcp = this.configService.get<string>('USE_MCP') !== 'false' && !!this.mcpToolsService;
   }
 
   /**
@@ -73,7 +72,11 @@ export class AgentService {
       }
 
       // 3. 生成输入文件（包含 Analyzers 结果与动态上下文）
-      const inputFile = await this.generateInputFile(context, analyzerComments, dynamicContextSection);
+      const inputFile = await this.generateInputFile(
+        context,
+        analyzerComments,
+        dynamicContextSection,
+      );
       const promptFile = await this.generatePromptFile();
       const rulesFile = await this.generateRulesFile();
 

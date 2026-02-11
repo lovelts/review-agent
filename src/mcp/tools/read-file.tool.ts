@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { readFile } from 'fs/promises';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import { IMcpTool, McpToolResult, McpToolExecuteOptions } from '../interfaces/mcp-tool.interface';
 
 /**
@@ -13,8 +13,18 @@ export class ReadFileTool implements IMcpTool {
     name: 'read_file',
     description: 'Read content of a file in the repository. Path is relative to repo root.',
     parameters: [
-      { name: 'path', description: 'Relative path to the file from repo root', type: 'string' as const, required: true },
-      { name: 'encoding', description: 'Encoding (default: utf-8)', type: 'string' as const, required: false },
+      {
+        name: 'path',
+        description: 'Relative path to the file from repo root',
+        type: 'string' as const,
+        required: true,
+      },
+      {
+        name: 'encoding',
+        description: 'Encoding (default: utf-8)',
+        type: 'string' as const,
+        required: false,
+      },
     ],
   };
 

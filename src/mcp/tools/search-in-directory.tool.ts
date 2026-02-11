@@ -18,10 +18,30 @@ export class SearchInDirectoryTool implements IMcpTool {
     description:
       'Search for a pattern in files under a directory. Returns matching lines with file path and line number.',
     parameters: [
-      { name: 'pattern', description: 'Search pattern (string or regex)', type: 'string' as const, required: true },
-      { name: 'path', description: 'Relative path to directory to search (default: ".")', type: 'string' as const, required: false },
-      { name: 'filePattern', description: 'Glob-like filter, e.g. "*.ts" (optional)', type: 'string' as const, required: false },
-      { name: 'maxMatches', description: 'Max number of matches to return (default: 50)', type: 'number' as const, required: false },
+      {
+        name: 'pattern',
+        description: 'Search pattern (string or regex)',
+        type: 'string' as const,
+        required: true,
+      },
+      {
+        name: 'path',
+        description: 'Relative path to directory to search (default: ".")',
+        type: 'string' as const,
+        required: false,
+      },
+      {
+        name: 'filePattern',
+        description: 'Glob-like filter, e.g. "*.ts" (optional)',
+        type: 'string' as const,
+        required: false,
+      },
+      {
+        name: 'maxMatches',
+        description: 'Max number of matches to return (default: 50)',
+        type: 'number' as const,
+        required: false,
+      },
     ],
   };
 
@@ -40,7 +60,8 @@ export class SearchInDirectoryTool implements IMcpTool {
       return { success: false, error: 'Path escapes repo root or is invalid' };
     }
 
-    const maxMatches = typeof args.maxMatches === 'number' ? Math.min(100, args.maxMatches) : DEFAULT_MAX_MATCHES;
+    const maxMatches =
+      typeof args.maxMatches === 'number' ? Math.min(100, args.maxMatches) : DEFAULT_MAX_MATCHES;
     const filePattern = typeof args.filePattern === 'string' ? args.filePattern.trim() : null;
 
     try {
@@ -97,7 +118,13 @@ export class SearchInDirectoryTool implements IMcpTool {
         const full = resolve(currentDir, e.name);
 
         if (e.isDirectory()) {
-          if (e.name === 'node_modules' || e.name === '.git' || e.name === 'dist' || e.name === 'build') continue;
+          if (
+            e.name === 'node_modules' ||
+            e.name === '.git' ||
+            e.name === 'dist' ||
+            e.name === 'build'
+          )
+            continue;
           await scan(full);
           continue;
         }
@@ -129,10 +156,7 @@ export class SearchInDirectoryTool implements IMcpTool {
   }
 
   private globToRegex(glob: string): (name: string) => boolean {
-    const re = glob
-      .replace(/\./g, '\\.')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.');
+    const re = glob.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.');
     const regex = new RegExp(`^${re}$`, 'i');
     return (name: string) => regex.test(name);
   }

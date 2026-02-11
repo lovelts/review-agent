@@ -11,9 +11,15 @@ import { IMcpTool, McpToolResult, McpToolExecuteOptions } from '../interfaces/mc
 export class ListDirectoryTool implements IMcpTool {
   readonly definition = {
     name: 'list_directory',
-    description: 'List entries (files and subdirectories) in a directory. Path is relative to repo root.',
+    description:
+      'List entries (files and subdirectories) in a directory. Path is relative to repo root.',
     parameters: [
-      { name: 'path', description: 'Relative path to the directory (use "." for repo root)', type: 'string' as const, required: true },
+      {
+        name: 'path',
+        description: 'Relative path to the directory (use "." for repo root)',
+        type: 'string' as const,
+        required: true,
+      },
     ],
   };
 

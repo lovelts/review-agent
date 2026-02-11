@@ -28,7 +28,9 @@ export class McpToolsService implements OnModuleInit {
     this.registerTool(this.readFileTool);
     this.registerTool(this.listDirectoryTool);
     this.registerTool(this.searchInDirectoryTool);
-    this.logger.log(`Registered ${this.tools.size} MCP tools: ${Array.from(this.tools.keys()).join(', ')}`);
+    this.logger.log(
+      `Registered ${this.tools.size} MCP tools: ${Array.from(this.tools.keys()).join(', ')}`,
+    );
   }
 
   /**
@@ -109,8 +111,14 @@ export class McpToolsService implements OnModuleInit {
           ? context.filePath.replace(/\\[^\\]+$/, '')
           : '.';
       const listRes = await this.listDirectoryTool.execute({ path: dirPath || '.' }, options);
-      if (listRes.success && listRes.data && typeof listRes.data === 'object' && 'entries' in listRes.data) {
-        const entries = (listRes.data as { entries: Array<{ name: string; type: string }> }).entries;
+      if (
+        listRes.success &&
+        listRes.data &&
+        typeof listRes.data === 'object' &&
+        'entries' in listRes.data
+      ) {
+        const entries = (listRes.data as { entries: Array<{ name: string; type: string }> })
+          .entries;
         const list = entries.map((e) => `${e.name} (${e.type})`).join(', ');
         sections.push(`### Files in same directory (${dirPath || '.'})\n${list || '(empty)'}`);
       }
@@ -121,10 +129,17 @@ export class McpToolsService implements OnModuleInit {
       for (let i = 0; i < Math.min(importPaths.length, readLimit); i++) {
         const relPath = importPaths[i];
         const readRes = await this.readFileTool.execute({ path: relPath }, options);
-        if (readRes.success && readRes.data && typeof readRes.data === 'object' && 'content' in readRes.data) {
+        if (
+          readRes.success &&
+          readRes.data &&
+          typeof readRes.data === 'object' &&
+          'content' in readRes.data
+        ) {
           const content = (readRes.data as { path: string; content: string }).content;
           const preview = content.split('\n').slice(0, 80).join('\n');
-          sections.push(`### Related file: \`${relPath}\`\n\`\`\`\n${preview}${content.split('\n').length > 80 ? '\n...' : ''}\n\`\`\``);
+          sections.push(
+            `### Related file: \`${relPath}\`\n\`\`\`\n${preview}${content.split('\n').length > 80 ? '\n...' : ''}\n\`\`\``,
+          );
         }
       }
 
@@ -156,7 +171,12 @@ export class McpToolsService implements OnModuleInit {
       re.lastIndex = 0;
       while ((m = re.exec(diff)) !== null) {
         let p = m[1].replace(/\\/g, '/');
-        if (!p.endsWith('.ts') && !p.endsWith('.tsx') && !p.endsWith('.js') && !p.endsWith('.jsx')) {
+        if (
+          !p.endsWith('.ts') &&
+          !p.endsWith('.tsx') &&
+          !p.endsWith('.js') &&
+          !p.endsWith('.jsx')
+        ) {
           continue; // 只取明确是源码的路径，避免读 .json/.css 等
         }
         if (baseDir && baseDir !== '.') {

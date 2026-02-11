@@ -7,6 +7,7 @@ import { AgentModule } from './agent/agent.module';
 import { CommentModule } from './comment/comment.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { AnalyzersModule } from './analyzers/analyzers.module';
+import { McpToolsModule } from './mcp/mcp-tools.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AnalyzersModule } from './analyzers/analyzers.module';
       envFilePath: '.env',
     }),
     AnalyzersModule,
+    McpToolsModule,
     WebhookModule,
     GitlabModule,
     ContextModule,

@@ -7,6 +7,7 @@ import { join } from 'path';
 import { CRContext, CRResult, CRComment } from '../common/types';
 import { CommentSeverity } from '../common/types';
 import { AnalyzersService } from '../analyzers/analyzers.service';
+import { McpToolsService } from '../mcp/mcp-tools.service';
 
 const execAsync = promisify(exec);
 
@@ -17,16 +18,20 @@ export class AgentService {
   private readonly cursorCliPath: string;
   private readonly tempDir: string;
   private readonly useAnalyzers: boolean;
+  private readonly useMcp: boolean;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly analyzersService?: AnalyzersService,
+    private readonly mcpToolsService?: McpToolsService,
   ) {
     this.cursorModel = this.configService.get<string>('CURSOR_MODEL');
     this.cursorCliPath = this.configService.get<string>('CURSOR_CLI_PATH') || 'cursor';
     this.tempDir = join(process.cwd(), 'tmp', 'cr-inputs');
     this.useAnalyzers =
       this.configService.get<string>('USE_ANALYZERS') !== 'false' && !!this.analyzersService;
+    this.useMcp =
+      this.configService.get<string>('USE_MCP') !== 'false' && !!this.mcpToolsService;
   }
 
   /**
@@ -54,8 +59,21 @@ export class AgentService {
         }
       }
 
-      // 2. 生成输入文件（包含 Analyzers 结果）
-      const inputFile = await this.generateInputFile(context, analyzerComments);
+      // 2. 动态仓库上下文（MCP：读文件/列目录/搜索）
+      let dynamicContextSection = '';
+      if (this.useMcp && this.mcpToolsService) {
+        try {
+          dynamicContextSection = await this.mcpToolsService.enrichContext(context);
+          if (dynamicContextSection) {
+            this.logger.debug('MCP dynamic context added');
+          }
+        } catch (error) {
+          this.logger.warn('MCP enrichContext failed', error);
+        }
+      }
+
+      // 3. 生成输入文件（包含 Analyzers 结果与动态上下文）
+      const inputFile = await this.generateInputFile(context, analyzerComments, dynamicContextSection);
       const promptFile = await this.generatePromptFile();
       const rulesFile = await this.generateRulesFile();
 
@@ -86,6 +104,7 @@ export class AgentService {
   private async generateInputFile(
     context: CRContext,
     analyzerComments: CRComment[] = [],
+    dynamicContextSection: string = '',
   ): Promise<string> {
     let analyzersSection = '';
     if (analyzerComments.length > 0) {
@@ -103,7 +122,7 @@ ${analyzerComments.map((c) => `- Line ${c.line}: [${c.severity}] ${c.comment}`).
 ## File: ${context.filePath}
 ## Language: ${context.language || 'unknown'}
 
-${analyzersSection}## Diff:
+${analyzersSection}${dynamicContextSection}## Diff:
 \`\`\`diff
 ${context.diff}
 \`\`\`

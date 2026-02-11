@@ -3,18 +3,18 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
-import { BaseSkill } from '../base/base.skill';
-import { ISkill, SkillResult, SkillConfig } from '../interfaces/skill.interface';
+import { BaseAnalyzer } from '../base/base.analyzer';
+import { IAnalyzer, AnalyzerResult, AnalyzerConfig } from '../interfaces/analyzer.interface';
 import { CRContext, CRComment, CommentSeverity } from '../../common/types';
 
 const execAsync = promisify(exec);
 
 /**
- * TypeScript Skill
+ * TypeScript Analyzer
  * 执行 TypeScript 类型检查
  */
 @Injectable()
-export class TypeScriptSkill extends BaseSkill implements ISkill {
+export class TypeScriptAnalyzer extends BaseAnalyzer implements IAnalyzer {
   public readonly name = 'typescript';
   public readonly description = 'TypeScript type checking';
   public readonly supportedLanguages = ['typescript', 'tsx'];
@@ -23,10 +23,10 @@ export class TypeScriptSkill extends BaseSkill implements ISkill {
 
   constructor() {
     super();
-    this.tempDir = join(process.cwd(), 'tmp', 'skills');
+    this.tempDir = join(process.cwd(), 'tmp', 'analyzers');
   }
 
-  async execute(context: CRContext, config?: SkillConfig): Promise<SkillResult> {
+  async execute(context: CRContext, config?: AnalyzerConfig): Promise<AnalyzerResult> {
     return this.executeWithTiming(context, async () => {
       // 检查 TypeScript 是否可用
       try {

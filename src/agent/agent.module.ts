@@ -1,9 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AgentService } from './agent.service';
-import { SkillsModule } from '../skills/skills.module';
+import { AnalyzersModule } from '../analyzers/analyzers.module';
 
 @Module({
-  imports: [forwardRef(() => SkillsModule)],
+  imports: [forwardRef(() => AnalyzersModule)],
   providers: [AgentService],
   exports: [AgentService],
 })

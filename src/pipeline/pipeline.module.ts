@@ -4,10 +4,10 @@ import { GitlabModule } from '../gitlab/gitlab.module';
 import { ContextModule } from '../context/context.module';
 import { AgentModule } from '../agent/agent.module';
 import { CommentModule } from '../comment/comment.module';
-import { SkillsModule } from '../skills/skills.module';
+import { AnalyzersModule } from '../analyzers/analyzers.module';
 
 @Module({
-  imports: [GitlabModule, ContextModule, AgentModule, CommentModule, SkillsModule],
+  imports: [GitlabModule, ContextModule, AgentModule, CommentModule, AnalyzersModule],
   providers: [PipelineService],
   exports: [PipelineService],
 })

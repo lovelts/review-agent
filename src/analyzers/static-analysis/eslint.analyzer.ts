@@ -3,18 +3,18 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
-import { BaseSkill } from '../base/base.skill';
-import { ISkill, SkillResult, SkillConfig } from '../interfaces/skill.interface';
+import { BaseAnalyzer } from '../base/base.analyzer';
+import { IAnalyzer, AnalyzerResult, AnalyzerConfig } from '../interfaces/analyzer.interface';
 import { CRContext, CRComment, CommentSeverity } from '../../common/types';
 
 const execAsync = promisify(exec);
 
 /**
- * ESLint Skill
+ * ESLint Analyzer
  * 执行 ESLint 静态代码分析
  */
 @Injectable()
-export class EslintSkill extends BaseSkill implements ISkill {
+export class EslintAnalyzer extends BaseAnalyzer implements IAnalyzer {
   public readonly name = 'eslint';
   public readonly description = 'ESLint static code analysis';
   public readonly supportedLanguages = ['javascript', 'typescript', 'jsx', 'tsx'];
@@ -23,10 +23,10 @@ export class EslintSkill extends BaseSkill implements ISkill {
 
   constructor() {
     super();
-    this.tempDir = join(process.cwd(), 'tmp', 'skills');
+    this.tempDir = join(process.cwd(), 'tmp', 'analyzers');
   }
 
-  async execute(context: CRContext, config?: SkillConfig): Promise<SkillResult> {
+  async execute(context: CRContext, config?: AnalyzerConfig): Promise<AnalyzerResult> {
     return this.executeWithTiming(context, async () => {
       // 检查 ESLint 是否可用
       try {

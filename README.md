@@ -69,6 +69,7 @@ src/
 ├── agent/                  # Cursor CLI 执行层
 ├── comment/                # 评论回写模块
 ├── pipeline/               # CR Pipeline
+├── analyzers/              # 静态分析（ESLint、TypeScript 等）
 └── common/                 # 通用工具和类型
 ```
 
@@ -85,6 +86,8 @@ src/
 - `CURSOR_MODEL`: 使用的 AI 模型（默认: claude-3.5-sonnet）
 - `MAX_FILES_PER_MR`: 每个 MR 最大文件数（默认: 50）
 - `MAX_TOKENS_PER_REQUEST`: 每次请求最大 token 数（默认: 100000）
+- `USE_ANALYZERS`: 是否启用静态分析（默认: true）
+- `ENABLED_ANALYZERS`: 启用的分析器，逗号分隔（默认: eslint,typescript）
 
 ## 使用 Cursor CLI
 

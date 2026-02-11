@@ -1,12 +1,12 @@
 import { Logger } from '@nestjs/common';
-import { ISkill, SkillResult, SkillConfig } from '../interfaces/skill.interface';
+import { IAnalyzer, AnalyzerResult, AnalyzerConfig } from '../interfaces/analyzer.interface';
 import { CRContext, CRComment } from '../../common/types';
 
 /**
- * Skill 基类
+ * Analyzer 基类
  * 提供通用功能和默认实现
  */
-export abstract class BaseSkill implements ISkill {
+export abstract class BaseAnalyzer implements IAnalyzer {
   protected readonly logger: Logger;
   public abstract readonly name: string;
   public abstract readonly description: string;
@@ -29,31 +29,31 @@ export abstract class BaseSkill implements ISkill {
   }
 
   /**
-   * 执行 Skill（子类必须实现）
+   * 执行 Analyzer（子类必须实现）
    */
-  abstract execute(context: CRContext, config?: SkillConfig): Promise<SkillResult>;
+  abstract execute(context: CRContext, config?: AnalyzerConfig): Promise<AnalyzerResult>;
 
   /**
    * 记录执行时间
    */
   protected async executeWithTiming(
     context: CRContext,
-    executor: () => Promise<SkillResult>,
-  ): Promise<SkillResult> {
+    executor: () => Promise<AnalyzerResult>,
+  ): Promise<AnalyzerResult> {
     const startTime = Date.now();
     try {
       const result = await executor();
       result.executionTime = Date.now() - startTime;
       return result;
     } catch (error) {
-      const result: SkillResult = {
-        skillName: this.name,
+      const result: AnalyzerResult = {
+        analyzerName: this.name,
         success: false,
         comments: [],
         error: error instanceof Error ? error.message : String(error),
         executionTime: Date.now() - startTime,
       };
-      this.logger.error(`Skill ${this.name} execution failed:`, error);
+      this.logger.error(`Analyzer ${this.name} execution failed:`, error);
       return result;
     }
   }
@@ -64,9 +64,9 @@ export abstract class BaseSkill implements ISkill {
   protected createSuccessResult(
     comments: CRComment[],
     metadata?: Record<string, any>,
-  ): SkillResult {
+  ): AnalyzerResult {
     return {
-      skillName: this.name,
+      analyzerName: this.name,
       success: true,
       comments,
       metadata,
@@ -76,9 +76,9 @@ export abstract class BaseSkill implements ISkill {
   /**
    * 创建失败结果
    */
-  protected createFailureResult(error: string, metadata?: Record<string, any>): SkillResult {
+  protected createFailureResult(error: string, metadata?: Record<string, any>): AnalyzerResult {
     return {
-      skillName: this.name,
+      analyzerName: this.name,
       success: false,
       comments: [],
       error,

@@ -1,10 +1,10 @@
 import { CRContext, CRComment } from '../../common/types';
 
 /**
- * Skill 执行结果
+ * Analyzer 执行结果
  */
-export interface SkillResult {
-  skillName: string;
+export interface AnalyzerResult {
+  analyzerName: string;
   success: boolean;
   comments: CRComment[];
   metadata?: Record<string, any>;
@@ -13,41 +13,41 @@ export interface SkillResult {
 }
 
 /**
- * Skill 配置
+ * Analyzer 配置
  */
-export interface SkillConfig {
+export interface AnalyzerConfig {
   enabled: boolean;
   timeout?: number;
   options?: Record<string, any>;
 }
 
 /**
- * Skill 接口
- * 所有 Skills 必须实现此接口
+ * Analyzer 接口
+ * 所有 Analyzers 必须实现此接口
  */
-export interface ISkill {
+export interface IAnalyzer {
   /**
-   * Skill 名称（唯一标识）
+   * Analyzer 名称（唯一标识）
    */
   readonly name: string;
 
   /**
-   * Skill 描述
+   * Analyzer 描述
    */
   readonly description: string;
 
   /**
-   * Skill 支持的编程语言
+   * Analyzer 支持的编程语言
    */
   readonly supportedLanguages: string[];
 
   /**
-   * 检查是否应该执行此 Skill
+   * 检查是否应该执行此 Analyzer
    */
   shouldExecute(context: CRContext): boolean;
 
   /**
-   * 执行 Skill
+   * 执行 Analyzer
    */
-  execute(context: CRContext, config?: SkillConfig): Promise<SkillResult>;
+  execute(context: CRContext, config?: AnalyzerConfig): Promise<AnalyzerResult>;
 }

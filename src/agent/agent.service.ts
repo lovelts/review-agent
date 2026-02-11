@@ -6,7 +6,7 @@ import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { CRContext, CRResult, CRComment } from '../common/types';
 import { CommentSeverity } from '../common/types';
-import { SkillsService } from '../skills/skills.service';
+import { AnalyzersService } from '../analyzers/analyzers.service';
 
 const execAsync = promisify(exec);
 
@@ -16,17 +16,17 @@ export class AgentService {
   private readonly cursorModel: string;
   private readonly cursorCliPath: string;
   private readonly tempDir: string;
-  private readonly useSkills: boolean;
+  private readonly useAnalyzers: boolean;
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly skillsService?: SkillsService,
+    private readonly analyzersService?: AnalyzersService,
   ) {
     this.cursorModel = this.configService.get<string>('CURSOR_MODEL');
     this.cursorCliPath = this.configService.get<string>('CURSOR_CLI_PATH') || 'cursor';
     this.tempDir = join(process.cwd(), 'tmp', 'cr-inputs');
-    this.useSkills =
-      this.configService.get<string>('USE_SKILLS') !== 'false' && !!this.skillsService;
+    this.useAnalyzers =
+      this.configService.get<string>('USE_ANALYZERS') !== 'false' && !!this.analyzersService;
   }
 
   /**
@@ -39,23 +39,23 @@ export class AgentService {
       // 确保临时目录存在
       await mkdir(this.tempDir, { recursive: true });
 
-      // 1. 执行 Skills（如果启用）
-      let skillsComments: CRComment[] = [];
-      if (this.useSkills && this.skillsService) {
+      // 1. 执行 Analyzers（如果启用）
+      let analyzerComments: CRComment[] = [];
+      if (this.useAnalyzers && this.analyzersService) {
         try {
-          const skillsResults = await this.skillsService.executeSkills(context);
-          skillsComments = this.skillsService.mergeResults(skillsResults);
-          const stats = this.skillsService.getStatistics(skillsResults);
+          const analyzerResults = await this.analyzersService.executeAnalyzers(context);
+          analyzerComments = this.analyzersService.mergeResults(analyzerResults);
+          const stats = this.analyzersService.getStatistics(analyzerResults);
           this.logger.debug(
-            `Skills executed: ${stats.successfulSkills}/${stats.totalSkills} successful, ${stats.totalComments} comments, avg time: ${stats.averageExecutionTime}ms`,
+            `Analyzers executed: ${stats.successfulAnalyzers}/${stats.totalAnalyzers} successful, ${stats.totalComments} comments, avg time: ${stats.averageExecutionTime}ms`,
           );
         } catch (error) {
-          this.logger.warn(`Skills execution failed:`, error);
+          this.logger.warn(`Analyzers execution failed:`, error);
         }
       }
 
-      // 2. 生成输入文件（包含 Skills 结果）
-      const inputFile = await this.generateInputFile(context, skillsComments);
+      // 2. 生成输入文件（包含 Analyzers 结果）
+      const inputFile = await this.generateInputFile(context, analyzerComments);
       const promptFile = await this.generatePromptFile();
       const rulesFile = await this.generateRulesFile();
 
@@ -65,8 +65,8 @@ export class AgentService {
       // 4. 解析结果
       const crResult = this.parseResult(result);
 
-      // 5. 合并 Skills 结果和 AI 结果
-      const allComments = [...skillsComments, ...crResult.comments];
+      // 5. 合并 Analyzers 结果和 AI 结果
+      const allComments = [...analyzerComments, ...crResult.comments];
 
       // 清理临时文件
       await this.cleanupFiles([inputFile, promptFile, rulesFile]);
@@ -85,12 +85,12 @@ export class AgentService {
    */
   private async generateInputFile(
     context: CRContext,
-    skillsComments: CRComment[] = [],
+    analyzerComments: CRComment[] = [],
   ): Promise<string> {
-    let skillsSection = '';
-    if (skillsComments.length > 0) {
-      skillsSection = `## Static Analysis Results (from tools):
-${skillsComments.map((c) => `- Line ${c.line}: [${c.severity}] ${c.comment}`).join('\n')}
+    let analyzersSection = '';
+    if (analyzerComments.length > 0) {
+      analyzersSection = `## Static Analysis Results (from tools):
+${analyzerComments.map((c) => `- Line ${c.line}: [${c.severity}] ${c.comment}`).join('\n')}
 
 **Note**: These are automated tool findings. Please review them along with the code changes.
 
@@ -103,7 +103,7 @@ ${skillsComments.map((c) => `- Line ${c.line}: [${c.severity}] ${c.comment}`).jo
 ## File: ${context.filePath}
 ## Language: ${context.language || 'unknown'}
 
-${skillsSection}## Diff:
+${analyzersSection}## Diff:
 \`\`\`diff
 ${context.diff}
 \`\`\`

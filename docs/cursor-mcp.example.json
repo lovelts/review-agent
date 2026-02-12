@@ -2,7 +2,7 @@
   "mcpServers": {
     "cr-agent-repo": {
       "command": "npx",
-      "args": ["tsx", "src/mcp/server/stdio-server.ts"],
+      "args": ["tsx", "src/mcp/server/stdio-server.mts"],
       "env": {
         "REPO_ROOT": "."
       }

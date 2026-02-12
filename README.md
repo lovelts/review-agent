@@ -88,9 +88,6 @@ src/
 - `MAX_TOKENS_PER_REQUEST`: 每次请求最大 token 数（默认: 100000）
 - `USE_ANALYZERS`: 是否启用静态分析（默认: true）
 - `ENABLED_ANALYZERS`: 启用的分析器，逗号分隔（默认: eslint,typescript）
-- `USE_MCP`: 是否启用 MCP 动态仓库上下文（默认: true，需配置 REPO_ROOT 才生效）
-- `REPO_ROOT`: 仓库根目录（单仓库），用于 MCP 读文件/列目录/搜索
-- `REPO_ROOT_<projectId>`: 按项目配置仓库路径（多仓库）
 
 ## 使用 Cursor CLI
 
@@ -110,7 +107,7 @@ cursor --version
 - [GitLab Runner 设置](./docs/GITLAB_RUNNER_SETUP.md) - GitLab Runner 安装和配置指南
 - [技术方案](./docs/GitLab_CR_AI_技术方案.md) - 完整技术方案文档
 - [MCP 能力场景](./docs/MCP_SCENARIOS.md) - MCP 接入后的典型场景与优先级
-- [MCP 动态上下文配置](./docs/MCP_SETUP.md) - REPO_ROOT、工具说明与扩展方式
+- [MCP 配置说明](./docs/MCP_SETUP.md) - MCP 仅通过 Cursor stdio 使用
 - [Cursor MCP Server 配置](./docs/CURSOR_MCP_SERVER.md) - 在 Cursor 中由模型按需调用 read_file/list_directory/search
 
 ## 工作流程

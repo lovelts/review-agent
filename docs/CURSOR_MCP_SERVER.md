@@ -11,7 +11,7 @@ MCP Server 是独立进程，通过 **stdio** 与 Cursor 通信。需要指定�
 REPO_ROOT=. npm run mcp:server
 
 # 或指定绝对路径（多仓库时按需修改）
-REPO_ROOT=/path/to/your/repo npx tsx src/mcp/server/stdio-server.ts
+REPO_ROOT=/path/to/your/repo npx tsx src/mcp/server/stdio-server.mts
 ```
 
 - 不设 `REPO_ROOT` 时，默认使用进程当前工作目录 `process.cwd()`。
@@ -27,11 +27,11 @@ REPO_ROOT=/path/to/your/repo npx tsx src/mcp/server/stdio-server.ts
 4. **Name**：随意，例如 `cr-agent-repo`
 5. **Command**：填写启动命令。若使用本项目根目录为仓库根，可写成（请把 `YOUR_CR_AGENT_PATH` 换成实际路径）：
    ```bash
-   REPO_ROOT=YOUR_CR_AGENT_PATH npx tsx YOUR_CR_AGENT_PATH/src/mcp/server/stdio-server.ts
+   REPO_ROOT=YOUR_CR_AGENT_PATH npx tsx YOUR_CR_AGENT_PATH/src/mcp/server/stdio-server.mts
    ```
    或先 `cd` 到 crAgent 再跑（路径用绝对路径更稳妥）：
    ```bash
-   cd /path/to/crAgent && REPO_ROOT=. npx tsx src/mcp/server/stdio-server.ts
+   cd /path/to/crAgent && REPO_ROOT=. npx tsx src/mcp/server/stdio-server.mts
    ```
 
 ### 方式 B：编辑配置文件
@@ -56,7 +56,7 @@ REPO_ROOT=/path/to/your/repo npx tsx src/mcp/server/stdio-server.ts
   "mcpServers": {
     "cr-agent-repo": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/crAgent/src/mcp/server/stdio-server.ts"],
+      "args": ["tsx", "/absolute/path/to/crAgent/src/mcp/server/stdio-server.mts"],
       "env": {
         "REPO_ROOT": "/absolute/path/to/your/code/repo"
       }
@@ -86,8 +86,8 @@ REPO_ROOT=/path/to/your/repo npx tsx src/mcp/server/stdio-server.ts
 
 ## 5. 与 CR Agent 后端的关系
 
-- **CR Agent 后端**（Nest 服务）：通过 GitLab Webhook/CI 触发，用 Cursor CLI 或其它方式跑 CR，当前仍使用「提前拉取上下文」的 `enrichContext`，与 Cursor IDE 是否开 MCP 无关。
-- **Cursor MCP Server**（本 stdio 进程）：只给 **Cursor IDE 内的 Agent** 用，让**模型在对话中按需调工具**。两者可同时存在：后端继续用现有 CR 流程，本地用 Cursor 时由模型调 MCP。
+- **CR Agent 后端**（Nest 服务）：通过 GitLab Webhook/CI 触发，用 Cursor CLI 跑 CR；输入仅包含 diff、周围代码与 Analyzers 结果，**不**拉取仓库内额外文件，与 Cursor IDE 是否开 MCP 无关。
+- **Cursor MCP Server**（本 stdio 进程）：只给 **Cursor IDE 内的 Agent** 用，让**模型在对话中按需调工具**。在 Cursor 内做代码审查或探索代码时，可依赖本 MCP 获取仓库内容。
 
 ## 6. 故障排查
 

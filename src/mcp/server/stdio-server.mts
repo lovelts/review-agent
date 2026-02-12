@@ -4,8 +4,10 @@
  * 暴露 read_file / list_directory / search_in_directory 三个工具，
  * 供 Cursor 的 Agent（Composer）在代码审查时按需调用。
  *
+ * 使用 .mts 入口，以 ESM 运行，使 SDK 解析走 import 条件（dist/esm）。
+ *
  * 运行方式（需先设置 REPO_ROOT）：
- *   REPO_ROOT=/path/to/repo npx tsx src/mcp/server/stdio-server.ts
+ *   REPO_ROOT=/path/to/repo npx tsx src/mcp/server/stdio-server.mts
  * 或在 Cursor 的 MCP 配置里填写上述 command。
  */
 

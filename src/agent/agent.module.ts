@@ -1,13 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { AnalyzersModule } from '../analyzers/analyzers.module';
-import { McpToolsModule } from '../mcp/mcp-tools.module';
 
 @Module({
-  imports: [
-    forwardRef(() => AnalyzersModule),
-    forwardRef(() => McpToolsModule),
-  ],
+  imports: [forwardRef(() => AnalyzersModule)],
   providers: [AgentService],
   exports: [AgentService],
 })
